@@ -3,6 +3,8 @@
  *
  *	Outputs information about a WHDLoad slave.
  *
+ *	$Id$
+ *
  * 0.01 - Beta release (Action members only).
  *      - Correctly supports slaves up to v5.
  *
@@ -27,6 +29,10 @@
  *      - Added a fairly crude Kickstart 3.1 Rom detection for slaves.
  *      - New resload_Examine/ExNext flag support added.
  *      - Released 1st February 2002.
+ *
+ * 1.31 - Supports slaves up to v16.
+ *	- scancheck for kick30 replaced with kick12
+ *	- misc changes to avoid compiler warnings
  */
 
 #include <stdio.h>
@@ -36,7 +42,7 @@
 #include "WHDInfo.h"
 
 #ifdef AMIGA
-static const char *ver = "$VER: " PROGNAME " " VERSION "." REVISION " (18.4.00)";
+static const char *versionstring = "$VER: " PROGNAME " " VERSION "." REVISION " (" DATE ")";
 #endif
 
 char *progName = NULL;
@@ -55,16 +61,15 @@ char *ws_Flags_Descriptions[] = {
 	"Forward \"privilege violation\" exceptions to handler",
 	"Forward \"line-f\" exceptions to handler",
 	"Clear base and expansion memory with 0",
-	"Uses resload_Examine/ExNext"
+	"Uses resload_Examine/ExNext",
+	"Forward \"division by zero\" exceptions to handler",
+	"Forward \"illegal instruction\" exceptions to handler",
 };
 
 void printTitle(void)
 {
-	printf(ASCII_WHITE PROGNAME ASCII_BLACK " v" VERSION "." REVISION "\n(c) " YEAR " " ASCII_BLUE AUTHOR ASCII_BLACK
-#ifdef GROUP
-		" of " GROUP
-#endif
-		" (" EMAIL ")\n\n");
+	printf(ASCII_WHITE PROGNAME ASCII_BLACK " v" VERSION "." REVISION " (" DATE ")"
+	" by " ASCII_BLUE AUTHOR ASCII_BLACK "\n\n");
 }
 
 void printUsage(void)
@@ -186,7 +191,7 @@ long getFileSize(FILE *filePtr)
 	This function does not terminate at a NULL byte.  It always
 	searches n bytes.
 =================================================================== */
-UBYTE *memfind(UBYTE *a, UBYTE *b, long n, long len)
+UBYTE *memfind(UBYTE *a, char *b, long n, long len)
 {
 	long	 remaining = 0, precalc = (len - n) + 1;
 	UBYTE	*ptr = a;
@@ -251,11 +256,11 @@ void showWHDInfo(char *fileName)
 	struct WhdloadSlave	 slave;
 	FILE			*filePtr = NULL;
 	long			 filePos = 0, fileSize = 0, counter = 0;
-	char			*memPtr = NULL, *vers = NULL;
-	char			 comment[256];
+	UBYTE			*memPtr = NULL, *vers = NULL;
+	UWORD			w, *wp = NULL;
 	ULONG			*longPtr = NULL;
+	char			*kickstart12 = "33180";
 	char			*kickstart13 = "34005";
-	char			*kickstart30 = "39106";
 	char			*kickstart31 = "40068";
 
 	InitEndian();
@@ -322,23 +327,30 @@ void showWHDInfo(char *fileName)
 							slave.ws_copy = GetUWORD(&slave.ws_copy, ENDIAN_BIG);
 							slave.ws_info = GetUWORD(&slave.ws_info, ENDIAN_BIG);
 
-							if (slave.ws_name != NULL)
+							if (slave.ws_name != 0)
 							{
 								printf("%s ",memPtr+filePos+slave.ws_name);
 							}
-							if (slave.ws_copy != NULL)
+							if (slave.ws_copy != 0)
 							{
 								printf("(c) %s",memPtr+filePos+slave.ws_copy);
 							}
-							if ((slave.ws_name != NULL) || (slave.ws_copy != NULL))
+							if ((slave.ws_name != 0) || (slave.ws_copy != 0))
 							{
 								printf("\n");
 							}
-							if (slave.ws_info != NULL)
+							if (slave.ws_info != 0)
 							{
-								replaceNegOneInString(memPtr+filePos+slave.ws_info);
+								replaceNegOneInString((char*)memPtr+filePos+slave.ws_info);
 								printf("%s\n\n",memPtr+filePos+slave.ws_info);
 							}
+						}
+
+						if (slave.ws_Version >= 16)
+						{
+							slave.ws_kickname = GetUWORD(&slave.ws_kickname, ENDIAN_BIG);
+							slave.ws_kicksize = GetULONG(&slave.ws_kicksize, ENDIAN_BIG);
+							slave.ws_kickcrc = GetUWORD(&slave.ws_kickcrc, ENDIAN_BIG);
 						}
 
 						vers = memPtr;
@@ -374,7 +386,7 @@ void showWHDInfo(char *fileName)
 								}
 							}
 						}
-						printf("        Base memory: $%x (%ldKb)\n",slave.ws_BaseMemSize,slave.ws_BaseMemSize>>10);
+						printf("        Base memory: $%lx (%ld KB)\n",slave.ws_BaseMemSize,slave.ws_BaseMemSize>>10);
 
 						printf("Fake Exec installed: ");
 						if (slave.ws_ExecInstall == 0)
@@ -383,10 +395,10 @@ void showWHDInfo(char *fileName)
 						}
 						else
 						{
-							printf("$%x\n",slave.ws_ExecInstall);
+							printf("$%lx\n",slave.ws_ExecInstall);
 						}
 
-						printf("        Game Loader: $%x ($%x bytes from start of file)\n",slave.ws_GameLoader,filePos+slave.ws_GameLoader);
+						printf("        Game Loader: $%x ($%lx bytes from start of file)\n",slave.ws_GameLoader,filePos+slave.ws_GameLoader);
 		
 						printf("   Subdir for files: ");
 						if (slave.ws_CurrentDir == 0)
@@ -395,7 +407,7 @@ void showWHDInfo(char *fileName)
 						}
 						else
 						{
-							printf("%s\n",memPtr+filePos+slave.ws_CurrentDir);
+							printf("'%s'\n",memPtr+filePos+slave.ws_CurrentDir);
 						}
 
 						if (slave.ws_DontCache == 0)
@@ -404,8 +416,7 @@ void showWHDInfo(char *fileName)
 						}
 						else
 						{
-							printf("   Files not cached: ");
-							printf("%s\n",memPtr+filePos+slave.ws_DontCache);
+							printf("   Files not cached: '%s'\n",memPtr+filePos+slave.ws_DontCache);
 						}
 		
 						if (slave.ws_Version >= 4)
@@ -425,24 +436,58 @@ void showWHDInfo(char *fileName)
 							}
 							else
 							{
-								printf("$%x (%ldKb)%s\n",abs(slave.ws_ExpMem),abs(slave.ws_ExpMem)>>10,(slave.ws_ExpMem < 0 ? " (optional)" : ""));
+								if (slave.ws_ExpMem < 0) {
+									printf("$%lx (%ld KB) optional\n",-slave.ws_ExpMem,-slave.ws_ExpMem>>10);
+								} else {
+									printf("$%lx (%ld KB)\n",slave.ws_ExpMem,slave.ws_ExpMem>>10);
+								}
 							}
 						}
 
+						if (slave.ws_Version >= 16) {
+							printf("     Kickstart name: ");
+							if (slave.ws_kickcrc == 0xffff) {
+								wp = (UWORD*) (memPtr+filePos+slave.ws_kickname);
+								while (*wp++) {
+									w = GetUWORD(wp++, ENDIAN_BIG);
+									printf("'%s' ",memPtr+filePos+w);
+								}
+							} else {
+								if (slave.ws_kickname) {
+									printf("'%s'",(char*)memPtr+filePos+slave.ws_kickname);
+								} else {
+									printf("None");
+								}
+							}
+							printf("\n     Kickstart size: $%lx",slave.ws_kicksize);
+							if (slave.ws_kicksize) { printf(" (%ld KB)",slave.ws_kicksize>>10); }
+							printf("\n      Kickstart crc: ");
+							if (slave.ws_kickcrc == 0xffff) {
+								wp = (UWORD*) (memPtr+filePos+slave.ws_kickname);
+								while (*wp) {
+									w = GetUWORD(wp++, ENDIAN_BIG);
+									printf("$%x ",w);
+									wp++;
+								}
+							} else {
+								printf("$%x",slave.ws_kickcrc);
+							}
+							printf("\n");
+						}
+
+						if (memfind(memPtr, kickstart12, strlen(kickstart12), fileSize) != NULL)
+						{
+							printf("        Information: Slave requires kickstart 1.2 image!\n");
+						}
 						if (memfind(memPtr, kickstart13, strlen(kickstart13), fileSize) != NULL)
 						{
 							printf("        Information: Slave requires kickstart 1.3 image!\n");
-						}
-						if (memfind(memPtr, kickstart30, strlen(kickstart30), fileSize) != NULL)
-						{
-							printf("        Information: Slave requires kickstart 3.0 image!\n");
 						}
 						if (memfind(memPtr, kickstart31, strlen(kickstart31), fileSize) != NULL)
 						{
 							printf("        Information: Slave requires kickstart 3.1 image!\n");
 						}
-
-						sprintf(comment,"WHDLoad %d, %ldKb",slave.ws_Version,slave.ws_BaseMemSize>>10);
+						printf("\n");
 					}
 				}
 			}

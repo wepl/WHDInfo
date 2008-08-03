@@ -2,20 +2,19 @@
 	WHDInfo.h
 
 	Header file for WHDInfo.
+
+	$Id$
+
 */
 
 #ifndef _WHDINFO_H_
 #define _WHDINFO_H_
 
-#define	AMIGA
-
 #define	PROGNAME	"WHDInfo"
 #define	VERSION		"1"
-#define	REVISION	"30"
-#define	AUTHOR		"Codetapper"
-#define	GROUP		"Action"
-#define	EMAIL		"codetapper@hotmail.com"
-#define	YEAR		"2002"
+#define	REVISION	"31"
+#define	AUTHOR		"Codetapper, Wepl"
+#define	DATE		"03.08.2008"
 
 #ifdef AMIGA
 #include <exec/types.h>
@@ -31,7 +30,7 @@
 #include "endian.h"
 
 /* ===========================================================================
-   Slave		Version 1..3
+   Slave	Version 1+
 =========================================================================== */
 
 struct WhdloadSlave
@@ -58,7 +57,7 @@ struct WhdloadSlave
 				//starting WHDLoad 0.107 this is obsolete
 
 /* ===========================================================================
-  additional	Version 4..7
+  additional	Version 4+
 =========================================================================== */
 
 	UBYTE	ws_keydebug;	//raw key code to quit with debug
@@ -69,7 +68,7 @@ struct WhdloadSlave
 				//=0 means no key
 
 /* ===========================================================================
-   additional	Version 8..9
+   additional	Version 8+
 =========================================================================== */
 
         LONG   ws_ExpMem;       //size of required expansions memory, during
@@ -78,12 +77,21 @@ struct WhdloadSlave
 				//if negative it is optional
 
 /* ===========================================================================
-   additional	Version 10
+   additional	Version 10+
 =========================================================================== */
 
 	RPTR	ws_name;	//name of the installed program
 	RPTR	ws_copy;	//year and owner of the copyright
 	RPTR	ws_info;	//additional informations (author, version...)
+
+/* ===========================================================================
+   additional	Version 16+
+=========================================================================== */
+
+	RPTR	ws_kickname;	//name of kickstart image
+	ULONG	ws_kicksize;	//size of kickstart image
+	UWORD	ws_kickcrc;	//crc16 of kickstart image
+
 };
 
 void printTitle(void);
