@@ -2,8 +2,10 @@
 # Makefile for WHDInfo
 # on Amiga use gmake/gcc and call 'make AMIGA=1'
 # on MacOSX use XCode and call 'make MACOSX=1'
+# on AIX use xlc and call 'gmake AIX=1' (requires GNU make, see Toolbox)
+
 #
-# $Id: Makefile 1.2 2005/07/13 16:39:24 wepl Exp wepl $
+# $Id: Makefile 1.2 2008/08/03 17:04:32 wepl Exp wepl $
 #
 # 01.08.08 created
 #
@@ -24,6 +26,11 @@ endif
 ifdef MACOSX
 CFLAGS = -Wall -O2 -arch i386 -arch ppc
 LFLAGS = -arch i386 -arch ppc
+endif
+
+ifdef AIX
+CFLAGS = -O2 -qcpluscmt
+LFLAGS =
 endif
 
 SRCS = WHDInfo.c endian.c
