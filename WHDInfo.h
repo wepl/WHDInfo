@@ -3,7 +3,7 @@
 
 	Header file for WHDInfo.
 
-	$Id$
+	$Id: WHDInfo.h 1.2 2008/08/03 16:41:54 wepl Exp wepl $
 
 */
 
@@ -12,9 +12,9 @@
 
 #define	PROGNAME	"WHDInfo"
 #define	VERSION		"1"
-#define	REVISION	"31"
+#define	REVISION	"32"
 #define	AUTHOR		"Codetapper, Wepl"
-#define	DATE		"03.08.2008"
+#define	DATE		"27.07.2011"
 
 #ifdef AMIGA
 #include <exec/types.h>
@@ -91,6 +91,12 @@ struct WhdloadSlave
 	RPTR	ws_kickname;	//name of kickstart image
 	ULONG	ws_kicksize;	//size of kickstart image
 	UWORD	ws_kickcrc;	//crc16 of kickstart image
+
+/* ===========================================================================
+   additional	Version 17+
+=========================================================================== */
+
+	RPTR	ws_config;	//name of kickstart image
 
 };
 

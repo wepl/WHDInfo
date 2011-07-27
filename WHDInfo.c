@@ -3,7 +3,7 @@
  *
  *	Outputs information about a WHDLoad slave.
  *
- *	$Id$
+ *	$Id: WHDInfo.c 1.2 2008/08/03 16:41:54 wepl Exp wepl $
  *
  * 0.01 - Beta release (Action members only).
  *      - Correctly supports slaves up to v5.
@@ -33,6 +33,9 @@
  * 1.31 - Supports slaves up to v16.
  *	- scancheck for kick30 replaced with kick12
  *	- misc changes to avoid compiler warnings
+ *
+ * 1.32 (27.07.2011) Wepl
+ *	- Supports slaves up to v17
  */
 
 #include <stdio.h>
@@ -353,6 +356,11 @@ void showWHDInfo(char *fileName)
 							slave.ws_kickcrc = GetUWORD(&slave.ws_kickcrc, ENDIAN_BIG);
 						}
 
+						if (slave.ws_Version >= 17)
+						{
+							slave.ws_config = GetUWORD(&slave.ws_config, ENDIAN_BIG);
+						}
+
 						vers = memPtr;
 						for (;;)
 						{
@@ -473,6 +481,25 @@ void showWHDInfo(char *fileName)
 								printf("$%x",slave.ws_kickcrc);
 							}
 							printf("\n");
+						}
+
+						if (slave.ws_Version >= 17) {
+							char saved, *str, *next, *prefix;
+							prefix = "      Configuration: ";
+							if (slave.ws_config == 0) {
+								printf("%sNone\n",prefix);
+							} else {
+								str = (char*) memPtr+filePos+slave.ws_config;
+								while ((next = strstr(str, ";"))) {
+									saved = *++next;
+									*next = 0;
+									printf("%s%s\n",prefix,str);
+									*next = saved;
+									str = next;
+									prefix = "                     ";
+								}
+								printf("%s%s\n",prefix,str);
+							}
 						}
 
 						if (memfind(memPtr, kickstart12, strlen(kickstart12), fileSize) != NULL)
