@@ -5,7 +5,7 @@
 # on AIX use xlc and call 'gmake AIX=1' (requires GNU make, see Toolbox)
 
 #
-# $Id: Makefile 1.2 2008/08/03 17:04:32 wepl Exp wepl $
+# $Id: Makefile 1.3 2009/02/16 20:13:43 wepl Exp wepl $
 #
 # 01.08.08 created
 #
@@ -24,8 +24,11 @@ LFLAGS = -noixemul -s
 endif
 
 ifdef MACOSX
-CFLAGS = -Wall -O2 -arch i386 -arch ppc
-LFLAGS = -arch i386 -arch ppc
+#ARCH=-arch i386 -arch ppc
+#ARCH=-arch i386 -arch x86_64	# source is not yet 64-bit ready!
+ARCH=-arch i386
+CFLAGS = -Wall -O2 $(ARCH)
+LFLAGS = $(ARCH)
 endif
 
 ifdef AIX
