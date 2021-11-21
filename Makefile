@@ -5,7 +5,7 @@
 # on AIX use xlc and call 'gmake AIX=1' (requires GNU make, see Toolbox)
 
 #
-# $Id: Makefile 1.3 2009/02/16 20:13:43 wepl Exp wepl $
+# $Id: Makefile 1.4 2021/11/21 02:27:40 wepl Exp wepl $
 #
 # 01.08.08 created
 #
@@ -19,6 +19,7 @@ CFLAGS = -Wall -O2
 LFLAGS = -s
 
 ifdef AMIGA
+CC = gcc
 CFLAGS = -Wall -noixemul -O2
 LFLAGS = -noixemul -s
 endif
@@ -52,7 +53,7 @@ WHDInfo : $(OBJS)
 endif
 
 clean :
-	$(RM) *.bak *.o *.lnk
+	$(RM) *.bak *.o *.lnk WHDInfo
 
 distclean : clean
 	$(RM) C:WHDInfo
