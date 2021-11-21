@@ -3,7 +3,7 @@
  *
  *	Outputs information about a WHDLoad slave.
  *
- *	$Id: WHDInfo.c 1.2 2008/08/03 16:41:54 wepl Exp wepl $
+ *	$Id: WHDInfo.c 1.3 2011/07/27 22:56:30 wepl Exp wepl $
  *
  * 0.01 - Beta release (Action members only).
  *      - Correctly supports slaves up to v5.
@@ -36,6 +36,10 @@
  *
  * 1.32 (27.07.2011) Wepl
  *	- Supports slaves up to v17
+ *
+ * 1.33 (21.11.2021) Wepl
+ *	- fix detection of WHDLoad Slaves, as only one hunk is
+ *	  supported the struct will always start at fixed position 32
  */
 
 #include <stdio.h>
@@ -258,13 +262,13 @@ void showWHDInfo(char *fileName)
 {
 	struct WhdloadSlave	 slave;
 	FILE			*filePtr = NULL;
-	long			 filePos = 0, fileSize = 0, counter = 0;
+	long			 filePos = 32, fileSize = 0, counter = 0;
 	UBYTE			*memPtr = NULL, *vers = NULL;
 	UWORD			w, *wp = NULL;
-	ULONG			*longPtr = NULL;
 	char			*kickstart12 = "33180";
 	char			*kickstart13 = "34005";
 	char			*kickstart31 = "40068";
+	const char		*noslave = "File is NOT a WHDLoad Slave!\n\n";
 
 	InitEndian();
 
@@ -276,8 +280,9 @@ void showWHDInfo(char *fileName)
 	else
 	{
 		fileSize = getFileSize(filePtr);
-		if (fileSize >= 0)
-		{
+		if (fileSize < filePos + sizeof(struct WhdloadSlave)) {
+			printf(noslave);
+		} else {
 			memPtr = calloc(1,fileSize+1);
 			if (memPtr == NULL)
 			{
@@ -291,22 +296,11 @@ void showWHDInfo(char *fileName)
 				}
 				else
 				{
-					longPtr = (ULONG *) memPtr;
-
-					/* Find the magic slave value */
-					for (;; filePos += 4, longPtr++)
-					{
-						if (GetULONG(longPtr, ENDIAN_BIG) == 0x70ff4e75) break;
-						/* Remember start of slave position */
-						if (filePos >= (fileSize - sizeof(struct WhdloadSlave)))
-						{
-							printf("File is NOT a WHDLoad Slave!\n\n");
-							break;
-						}
-					}
-
-					if (filePos < (fileSize - sizeof(struct WhdloadSlave)))
-					{
+					
+					/* check if it is a WHDLoad Slave file */
+					if (strncmp(memPtr+filePos+4,"WHDLOADS",8)) {
+						printf(noslave);
+					} else {
 						/* Copy from memory into the slave structure */
 						memcpy(&slave,memPtr+filePos,sizeof(struct WhdloadSlave));
 

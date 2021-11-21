@@ -3,7 +3,7 @@
 
 	Header file for WHDInfo.
 
-	$Id: WHDInfo.h 1.2 2008/08/03 16:41:54 wepl Exp wepl $
+	$Id: WHDInfo.h 1.3 2011/07/27 22:56:30 wepl Exp wepl $
 
 */
 
@@ -12,9 +12,9 @@
 
 #define	PROGNAME	"WHDInfo"
 #define	VERSION		"1"
-#define	REVISION	"32"
+#define	REVISION	"33"
 #define	AUTHOR		"Codetapper, Wepl"
-#define	DATE		"27.07.2011"
+#define	DATE		"21.11.2021"
 
 #ifdef AMIGA
 #include <exec/types.h>
