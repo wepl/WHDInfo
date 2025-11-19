@@ -3,11 +3,6 @@
 # on Amiga use gmake/gcc and call 'make AMIGA=1'
 # on MacOSX use XCode and call 'make MACOSX=1'
 # on AIX use xlc and call 'gmake AIX=1' (requires GNU make, see Toolbox)
-
-#
-# $Id: Makefile 1.4 2021/11/21 02:27:40 wepl Exp wepl $
-#
-# 01.08.08 created
 #
 # $@ target
 # $< first dependency
@@ -63,7 +58,7 @@ depend:
 
 #DEPENDENCIES
 
-WHDInfo.o: WHDInfo.c WHDInfo.h exectypes.h endian.h
+WHDInfo.o: WHDInfo.c whdload.h exectypes.h endian.h
 
 endian.o: endian.c endian.h exectypes.h
 

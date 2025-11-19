@@ -3,8 +3,6 @@
  *
  *	Outputs information about a WHDLoad slave.
  *
- *	$Id: WHDInfo.c 1.3 2011/07/27 22:56:30 wepl Exp wepl $
- *
  * 0.01 - Beta release (Action members only).
  *      - Correctly supports slaves up to v5.
  *
@@ -40,13 +38,36 @@
  * 1.33 (21.11.2021) Wepl
  *	- fix detection of WHDLoad Slaves, as only one hunk is
  *	  supported the struct will always start at fixed position 32
+ *
+ * 1.34 (19.11.2025) Wepl
+ *	- use standard whdload.h
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "WHDInfo.h"
+
+#include "endian.h"
+#include "whdload.h"
+
+#define	PROGNAME	"WHDInfo"
+#define	VERSION		"1"
+#define	REVISION	"34"
+#define	AUTHOR		"Codetapper, Wepl"
+#define	DATE		"19.11.2025"
+
+#ifdef AMIGA
+#include <exec/types.h>
+#define	ASCII_BLACK	"\x1b[0m"
+#define	ASCII_BLUE	"\x1b[33m"
+#define	ASCII_WHITE	"\x1b[32m"
+#else
+#include "exectypes.h"
+#define	ASCII_BLACK	""
+#define	ASCII_BLUE	""
+#define	ASCII_WHITE	""
+#endif
 
 #ifdef AMIGA
 static const char *versionstring = "$VER: " PROGNAME " " VERSION "." REVISION " (" DATE ")";
@@ -242,6 +263,8 @@ void replaceNegOneInString(char *charPtr)
 	Main
 =================================================================== */
 
+void showWHDInfo(char *fileName);
+
 int main(int argc, char **argv)
 {
 	progName = argv[0];
@@ -260,7 +283,7 @@ int main(int argc, char **argv)
 
 void showWHDInfo(char *fileName)
 {
-	struct WhdloadSlave	 slave;
+	struct WHDLoadSlave	 slave;
 	FILE			*filePtr = NULL;
 	long			 filePos = 32, fileSize = 0, counter = 0;
 	UBYTE			*memPtr = NULL, *vers = NULL;
@@ -280,7 +303,7 @@ void showWHDInfo(char *fileName)
 	else
 	{
 		fileSize = getFileSize(filePtr);
-		if (fileSize < filePos + sizeof(struct WhdloadSlave)) {
+		if (fileSize < filePos + sizeof(struct WHDLoadSlave)) {
 			printf(noslave);
 		} else {
 			memPtr = calloc(1,fileSize+1);
@@ -302,7 +325,7 @@ void showWHDInfo(char *fileName)
 						printf(noslave);
 					} else {
 						/* Copy from memory into the slave structure */
-						memcpy(&slave,memPtr+filePos,sizeof(struct WhdloadSlave));
+						memcpy(&slave,memPtr+filePos,sizeof(struct WHDLoadSlave));
 
 						/* Fix endian problems */
 						slave.ws_Version = GetUWORD(&slave.ws_Version, ENDIAN_BIG);

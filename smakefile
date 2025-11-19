@@ -10,6 +10,6 @@ WHDInfo: $(OBJS)
 $(OBJS)
 <
 
-WHDInfo.o: WHDInfo.c WHDInfo.h endian.h
+WHDInfo.o: WHDInfo.c whdload.h endian.h
 
 endian.o: endian.c endian.h
