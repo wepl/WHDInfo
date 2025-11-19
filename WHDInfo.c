@@ -187,7 +187,7 @@ void printRawKeyName(UBYTE key)
 
 long getFileSize(FILE *filePtr)
 {
-	long	fileSize = 0;
+	long	fileSize;
 
 	if (fseek(filePtr,0,SEEK_END) == -1)
 	{
@@ -221,7 +221,7 @@ long getFileSize(FILE *filePtr)
 =================================================================== */
 UBYTE *memfind(UBYTE *a, char *b, long n, long len)
 {
-	long	 remaining = 0, precalc = (len - n) + 1;
+	long	 remaining, precalc = (len - n) + 1;
 	UBYTE	*ptr = a;
 
 	for(;;)
@@ -284,10 +284,10 @@ int main(int argc, char **argv)
 void showWHDInfo(char *fileName)
 {
 	struct WHDLoadSlave	 slave;
-	FILE			*filePtr = NULL;
-	long			 filePos = 32, fileSize = 0, counter = 0;
-	UBYTE			*memPtr = NULL, *vers = NULL;
-	UWORD			w, *wp = NULL;
+	FILE			*filePtr;
+	long			 filePos = 32, fileSize, counter;
+	UBYTE			*memPtr = NULL, *vers;
+	UWORD			w, *wp;
 	char			*kickstart12 = "33180";
 	char			*kickstart13 = "34005";
 	char			*kickstart31 = "40068";
@@ -299,30 +299,24 @@ void showWHDInfo(char *fileName)
 	if (filePtr == NULL)
 	{
 		printf("Couldn't open file %s\n\n",fileName);
-	}
-	else
-	{
+	} else {
 		fileSize = getFileSize(filePtr);
 		if (fileSize < filePos + sizeof(struct WHDLoadSlave)) {
-			printf(noslave);
+			puts(noslave);
 		} else {
 			memPtr = calloc(1,fileSize+1);
 			if (memPtr == NULL)
 			{
 				printf("Couldn't allocate enough memory!\n\n");
-			}
-			else
-			{
+			} else {
 				if (fread(memPtr, fileSize, 1, filePtr) != 1)
 				{
 					printf("Couldn't read file %s\n\n",fileName);
-				}
-				else
-				{
+				} else {
 					
 					/* check if it is a WHDLoad Slave file */
-					if (strncmp(memPtr+filePos+4,"WHDLOADS",8)) {
-						printf(noslave);
+					if (strncmp((char*)memPtr+filePos+4,"WHDLOADS",8)) {
+						puts(noslave);
 					} else {
 						/* Copy from memory into the slave structure */
 						memcpy(&slave,memPtr+filePos,sizeof(struct WHDLoadSlave));
@@ -516,6 +510,32 @@ void showWHDInfo(char *fileName)
 									prefix = "                     ";
 								}
 								printf("%s%s\n",prefix,str);
+							}
+						}
+
+						if (slave.ws_Version >= 20) {
+							char *prefix = "Alternate Memory:";
+							int ws_MemConfig = GetUWORD(&slave.ws_MemConfig, ENDIAN_BIG);
+							if (ws_MemConfig == 0) {
+								printf("%20s None\n",prefix);
+							} else {
+								char *optional;
+								int count = 1;
+								ULONG c, *p;
+								LONG f;
+								p = (ULONG*) (memPtr+filePos+ws_MemConfig);
+								while ((c = GetULONG(p++, ENDIAN_BIG))) {
+									f = GetLONG(p++, ENDIAN_BIG);
+									if (f < 0) {
+										optional = " optional";
+										f = -f;
+									} else {
+										optional = "";
+									}
+									printf("%20s %d. Base = $%lx (%ld KB), Exp = $%lx (%ld KB)%s\n",
+										prefix, count++, c, c>>10, f, f>>10, optional);
+									prefix = "";
+								}
 							}
 						}
 
