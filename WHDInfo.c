@@ -283,7 +283,7 @@ int main(int argc, char **argv)
 
 void showWHDInfo(char *fileName)
 {
-	struct WHDLoadSlave	 slave;
+	struct WHDLoadSlave	*slave;
 	FILE			*filePtr;
 	long			 filePos = 32, fileSize, counter;
 	UBYTE			*memPtr = NULL, *vers;
@@ -313,63 +313,38 @@ void showWHDInfo(char *fileName)
 				{
 					printf("Couldn't read file %s\n\n",fileName);
 				} else {
-					
+					slave = (struct WHDLoadSlave *) (memPtr + filePos);
+
 					/* check if it is a WHDLoad Slave file */
-					if (strncmp((char*)memPtr+filePos+4,"WHDLOADS",8)) {
+					if (strncmp(slave->ws_ID,"WHDLOADS",8)) {
 						puts(noslave);
 					} else {
-						/* Copy from memory into the slave structure */
-						memcpy(&slave,memPtr+filePos,sizeof(struct WHDLoadSlave));
+						int ws_Version = GetUWORD(&slave->ws_Version, ENDIAN_BIG);
+						int ws_Flags = GetUWORD(&slave->ws_Flags, ENDIAN_BIG);
+						ULONG ws_BaseMemSize = GetULONG(&slave->ws_BaseMemSize, ENDIAN_BIG);
+						ULONG ws_ExecInstall = GetULONG(&slave->ws_ExecInstall, ENDIAN_BIG);
+						UWORD ws_GameLoader = GetUWORD(&slave->ws_GameLoader, ENDIAN_BIG);
+						UWORD ws_CurrentDir = GetUWORD(&slave->ws_CurrentDir, ENDIAN_BIG);
+						UWORD ws_DontCache = GetUWORD(&slave->ws_DontCache, ENDIAN_BIG);
 
-						/* Fix endian problems */
-						slave.ws_Version = GetUWORD(&slave.ws_Version, ENDIAN_BIG);
-						slave.ws_Flags = GetUWORD(&slave.ws_Flags, ENDIAN_BIG);
-						slave.ws_BaseMemSize = GetULONG(&slave.ws_BaseMemSize, ENDIAN_BIG);
-						slave.ws_ExecInstall = GetULONG(&slave.ws_ExecInstall, ENDIAN_BIG);
-						slave.ws_GameLoader = GetUWORD(&slave.ws_GameLoader, ENDIAN_BIG);
-						slave.ws_CurrentDir = GetUWORD(&slave.ws_CurrentDir, ENDIAN_BIG);
-						slave.ws_DontCache = GetUWORD(&slave.ws_DontCache, ENDIAN_BIG);
+						if (ws_Version >= 10) {
+							UWORD ws_name = GetUWORD(&slave->ws_name, ENDIAN_BIG);
+							UWORD ws_copy = GetUWORD(&slave->ws_copy, ENDIAN_BIG);
+							UWORD ws_info = GetUWORD(&slave->ws_info, ENDIAN_BIG);
 
-						if (slave.ws_Version >= 8)
-						{
-							slave.ws_ExpMem = GetLONG(&slave.ws_ExpMem, ENDIAN_BIG);
-						}
-
-						if (slave.ws_Version >= 10)
-						{
-							slave.ws_name = GetUWORD(&slave.ws_name, ENDIAN_BIG);
-							slave.ws_copy = GetUWORD(&slave.ws_copy, ENDIAN_BIG);
-							slave.ws_info = GetUWORD(&slave.ws_info, ENDIAN_BIG);
-
-							if (slave.ws_name != 0)
-							{
-								printf("%s ",memPtr+filePos+slave.ws_name);
+							if (ws_name != 0) {
+								printf("%s ",memPtr+filePos+ws_name);
 							}
-							if (slave.ws_copy != 0)
-							{
-								printf("(c) %s",memPtr+filePos+slave.ws_copy);
+							if (ws_copy != 0) {
+								printf("(c) %s",memPtr+filePos+ws_copy);
 							}
-							if ((slave.ws_name != 0) || (slave.ws_copy != 0))
-							{
-								printf("\n");
+							if ((ws_name != 0) || (ws_copy != 0)) {
+								puts("\n");
 							}
-							if (slave.ws_info != 0)
-							{
-								replaceNegOneInString((char*)memPtr+filePos+slave.ws_info);
-								printf("%s\n\n",memPtr+filePos+slave.ws_info);
+							if (ws_info != 0) {
+								replaceNegOneInString((char*)memPtr+filePos+ws_info);
+								printf("%s\n\n",memPtr+filePos+ws_info);
 							}
-						}
-
-						if (slave.ws_Version >= 16)
-						{
-							slave.ws_kickname = GetUWORD(&slave.ws_kickname, ENDIAN_BIG);
-							slave.ws_kicksize = GetULONG(&slave.ws_kicksize, ENDIAN_BIG);
-							slave.ws_kickcrc = GetUWORD(&slave.ws_kickcrc, ENDIAN_BIG);
-						}
-
-						if (slave.ws_Version >= 17)
-						{
-							slave.ws_config = GetUWORD(&slave.ws_config, ENDIAN_BIG);
 						}
 
 						vers = memPtr;
@@ -393,114 +368,105 @@ void showWHDInfo(char *fileName)
 						printf("         Slave name: %s\n",fileName);
 						printf("         Slave size: %ld bytes\n",fileSize);
 
-						printf("    WHDLoad Version: %d\n",slave.ws_Version);
-						printf("              Flags: $%x (%d)\n",slave.ws_Flags,slave.ws_Flags);
-						if (slave.ws_Flags > 0)
+						printf("    WHDLoad Version: %d\n",ws_Version);
+						printf("              Flags: $%x (%d)\n",ws_Flags,ws_Flags);
+						if (ws_Flags > 0)
 						{
 							for (counter = 0; counter < sizeof(ws_Flags_Descriptions)/sizeof(char *); counter++)
 							{
-								if (slave.ws_Flags & 1<<counter)
+								if (ws_Flags & 1<<counter)
 								{
 									printf("                     %s\n",ws_Flags_Descriptions[counter]);
 								}
 							}
 						}
-						printf("        Base memory: $%lx (%ld KB)\n",slave.ws_BaseMemSize,slave.ws_BaseMemSize>>10);
+						printf("        Base memory: $%lx (%ld KB)\n",ws_BaseMemSize,ws_BaseMemSize>>10);
 
 						printf("Fake Exec installed: ");
-						if (slave.ws_ExecInstall == 0)
-						{
+						if (ws_ExecInstall == 0) {
 							printf("None\n");
-						}
-						else
-						{
-							printf("$%lx\n",slave.ws_ExecInstall);
+						} else {
+							printf("$%lx\n",ws_ExecInstall);
 						}
 
-						printf("        Game Loader: $%x ($%lx bytes from start of file)\n",slave.ws_GameLoader,filePos+slave.ws_GameLoader);
+						printf("        Game Loader: $%x ($%lx bytes from start of file)\n",ws_GameLoader,filePos+ws_GameLoader);
 		
 						printf("   Subdir for files: ");
-						if (slave.ws_CurrentDir == 0)
-						{
+						if (ws_CurrentDir == 0) {
 							printf("None\n");
-						}
-						else
-						{
-							printf("'%s'\n",memPtr+filePos+slave.ws_CurrentDir);
+						} else {
+							printf("'%s'\n",memPtr+filePos+ws_CurrentDir);
 						}
 
-						if (slave.ws_DontCache == 0)
-						{
+						if (ws_DontCache == 0) {
 							printf("            Caching: All files\n");
-						}
-						else
-						{
-							printf("   Files not cached: '%s'\n",memPtr+filePos+slave.ws_DontCache);
+						} else {
+							printf("   Files not cached: '%s'\n",memPtr+filePos+ws_DontCache);
 						}
 		
-						if (slave.ws_Version >= 4)
-						{
+						if (ws_Version >= 4) {
 							printf("          Debug key: ");
-							printRawKeyName(slave.ws_keydebug);
+							printRawKeyName(slave->ws_keydebug);
 							printf("           Exit key: ");
-							printRawKeyName(slave.ws_keyexit);
+							printRawKeyName(slave->ws_keyexit);
 						}
 						
-						if (slave.ws_Version >= 8)
-						{
+						if (ws_Version >= 8) {
+							LONG ws_ExpMem = GetLONG(&slave->ws_ExpMem, ENDIAN_BIG);
 							printf("   Expansion memory: ");
-							if (slave.ws_ExpMem == 0)
-							{
+							if (ws_ExpMem == 0) {
 								printf("None\n");
-							}
-							else
-							{
-								if (slave.ws_ExpMem < 0) {
-									printf("$%lx (%ld KB) optional\n",-slave.ws_ExpMem,-slave.ws_ExpMem>>10);
+							} else {
+								if (ws_ExpMem < 0) {
+									printf("$%lx (%ld KB) optional\n",-ws_ExpMem,-ws_ExpMem>>10);
 								} else {
-									printf("$%lx (%ld KB)\n",slave.ws_ExpMem,slave.ws_ExpMem>>10);
+									printf("$%lx (%ld KB)\n",ws_ExpMem,ws_ExpMem>>10);
 								}
 							}
 						}
 
-						if (slave.ws_Version >= 16) {
+						if (ws_Version >= 16) {
+							UWORD ws_kickname = GetUWORD(&slave->ws_kickname, ENDIAN_BIG);
+							ULONG ws_kicksize = GetULONG(&slave->ws_kicksize, ENDIAN_BIG);
+							UWORD ws_kickcrc = GetUWORD(&slave->ws_kickcrc, ENDIAN_BIG);
 							printf("     Kickstart name: ");
-							if (slave.ws_kickcrc == 0xffff) {
-								wp = (UWORD*) (memPtr+filePos+slave.ws_kickname);
+							if (ws_kickcrc == 0xffff) {
+								wp = (UWORD*) (memPtr+filePos+ws_kickname);
 								while (*wp++) {
 									w = GetUWORD(wp++, ENDIAN_BIG);
 									printf("'%s' ",memPtr+filePos+w);
 								}
 							} else {
-								if (slave.ws_kickname) {
-									printf("'%s'",(char*)memPtr+filePos+slave.ws_kickname);
+								if (ws_kickname) {
+									printf("'%s'",(char*)memPtr+filePos+ws_kickname);
 								} else {
 									printf("None");
 								}
 							}
-							printf("\n     Kickstart size: $%lx",slave.ws_kicksize);
-							if (slave.ws_kicksize) { printf(" (%ld KB)",slave.ws_kicksize>>10); }
+							printf("\n     Kickstart size: $%lx",ws_kicksize);
+							if (ws_kicksize) { printf(" (%ld KB)",ws_kicksize>>10); }
 							printf("\n      Kickstart crc: ");
-							if (slave.ws_kickcrc == 0xffff) {
-								wp = (UWORD*) (memPtr+filePos+slave.ws_kickname);
+							if (ws_kickcrc == 0xffff) {
+								wp = (UWORD*) (memPtr+filePos+ws_kickname);
 								while (*wp) {
 									w = GetUWORD(wp++, ENDIAN_BIG);
 									printf("$%x ",w);
 									wp++;
 								}
 							} else {
-								printf("$%x",slave.ws_kickcrc);
+								printf("$%x",ws_kickcrc);
 							}
 							printf("\n");
 						}
 
-						if (slave.ws_Version >= 17) {
+						if (ws_Version >= 17) {
+							UWORD ws_config = GetUWORD(&slave->ws_config, ENDIAN_BIG);
 							char saved, *str, *next, *prefix;
 							prefix = "      Configuration: ";
-							if (slave.ws_config == 0) {
+							if (ws_config == 0) {
 								printf("%sNone\n",prefix);
 							} else {
-								str = (char*) memPtr+filePos+slave.ws_config;
+								str = (char*) memPtr+filePos+ws_config;
 								while ((next = strstr(str, ";"))) {
 									saved = *++next;
 									*next = 0;
@@ -513,18 +479,17 @@ void showWHDInfo(char *fileName)
 							}
 						}
 
-						if (slave.ws_Version >= 20) {
+						if (ws_Version >= 20) {
 							char *prefix = "Alternate Memory:";
-							int ws_MemConfig = GetUWORD(&slave.ws_MemConfig, ENDIAN_BIG);
+							int ws_MemConfig = GetUWORD(&slave->ws_MemConfig, ENDIAN_BIG);
 							if (ws_MemConfig == 0) {
 								printf("%20s None\n",prefix);
 							} else {
 								char *optional;
 								int count = 1;
-								ULONG c, *p;
-								LONG f;
-								p = (ULONG*) (memPtr+filePos+ws_MemConfig);
-								while ((c = GetULONG(p++, ENDIAN_BIG))) {
+								LONG c, f, *p;
+								p = (LONG*) (memPtr+filePos+ws_MemConfig);
+								while ((c = GetLONG(p++, ENDIAN_BIG))) {
 									f = GetLONG(p++, ENDIAN_BIG);
 									if (f < 0) {
 										optional = " optional";
