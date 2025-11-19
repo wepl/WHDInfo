@@ -1,0 +1,112 @@
+Short:     WHDLoad slave examiner for HD games
+Uploader:  codetapper@hotmail.com (Codetapper)
+Author:    codetapper@hotmail.com (Codetapper), Wepl
+Version:   1.33
+Type:      util/misc
+
+  WHDInfo is used to display information about WHDInfo slaves used in
+  hundreds of HD installers.  With this utility, you can quickly view ALL
+  the slave information including WHDLoad version required, memory, slave
+  version, copyright information...  This is very handy to check you have
+  the latest slave, finding the quit key for games, and for WHDLoad HD
+  installer writers to check their installs.
+
+  WHDInfo should be run from the CLI only (you can run from Workbench,
+  but it will only display the help screen and quit).
+
+  It is best setup in Directory Opus so that double clicking on a slave 
+  displays all information about it.
+
+  Special greetings to Wepl for writing WHDLoad and assistance!
+
+
+  History
+  -------
+  0.01	- Beta release (Action members only).
+	- Correctly supports slaves up to v5.
+
+  1.00	- Supports all information in slaves up to v10.
+	- Displays version string (if one exists).
+	- Released 21st August 1999
+
+  1.10	- Supports all information in slaves up to v11.
+	- Optional expansion memory is detected and displayed.
+	- The special character -1 (which leaves a gap of 1.5 lines) is
+	  correctly handled in the information tag (thanks Bert!)
+	- Added a fairly crude Kickstart 1.3 Rom detection for slaves.
+	- Released 18th April 2000
+
+  1.20	- Supports all information in slaves up to v13.
+	- Fix faulty function keys for debug/quit.
+	- Flags shown in more useful hex and decimal.
+	- Released 2nd January 2001.
+
+  1.30	- Supports slaves up to v15.
+	- Fixed bug with flag WHDLF_ClearMem not appearing.
+	- Added a fairly crude Kickstart 3.1 Rom detection for slaves.
+	- New resload_Examine/ExNext flag support added.
+	- Released 1st February 2002.
+
+  1.31 (03.08.08) by Wepl:
+	- supports slaves up to v16.
+	- new Makefile
+	- binaries for macosx and linux-i386 supplied
+	- misc changes in the source and output
+
+  1.32 (27.07.11) by Wepl:
+	- supports slaves up to v17.
+
+  1.33 (21.11.21) Wepl
+ 	- fix detection of WHDLoad Slaves
+
+  Example Output
+  --------------
+  1.> WHDInfo BattleIsle.slave
+
+  WHDInfo v1.31
+  (c) 2002 Codetapper of Action (codetapper@hotmail.com)
+
+  Battle Isle (c) 1991 Blue Byte
+  adapted by Wepl
+  Version 1.0 (16.04.2000)
+
+           Slave name: BattleIsle.slave
+           Slave size: 2868 bytes
+      WHDLoad Version: 11
+                Flags: $12 (18)
+                       All errors quit WHDLoad
+                       Abort if MC68020+ is unavailable
+          Base memory: $66000 (408Kb)
+  Fake Exec installed: None
+          Game Loader: $286 ($2a6 bytes from start of file)
+     Subdir for files: data
+              Caching: All files
+            Debug key: None
+             Exit key: F10
+     Expansion memory: $89000 (548Kb)
+          Information: Slave requires kickstart 1.3 image!
+
+
+  1.> WHDInfo Entity.slave
+
+  WHDInfo v1.31
+  (c) 2002 Codetapper of Action (codetapper@hotmail.com)
+
+  Entity (c) 1992 Loriciel
+  installed & fixed by Bored Seal
+  V1.0 (22-Jul-99)
+
+           Slave name: Entity.slave
+           Slave size: 516 bytes
+      WHDLoad Version: 10
+                Flags: $6 (6)
+                       All errors quit WHDLoad
+                       Traps are emulated like autovectors
+          Base memory: $100000 (1024Kb)
+  Fake Exec installed: None
+          Game Loader: $70 ($90 bytes from start of file)
+     Subdir for files: None
+              Caching: All files
+            Debug key: None
+             Exit key: F10
+     Expansion memory: None

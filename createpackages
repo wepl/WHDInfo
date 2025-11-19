@@ -10,7 +10,7 @@ Set ARC .packages/WHDInfo$VER.lha
 Delete #?.bak #?/#?.bak $ARC
 
 C:DoVer FMT="%5v (%2d %M %2y) %n" DEFAULT="    -" FORCE QUIET C:WHDInfo
-Copy Clone C:WHDInfo				.release
+Copy Clone C:WHDInfo WHDInfo.readme		.release
 Copy Clone #?.[ch] SCOPTIONS smakefile Makefile	.release/src
 
 make clean
