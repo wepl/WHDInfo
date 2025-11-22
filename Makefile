@@ -11,7 +11,6 @@
 RM=rm -f
 
 CFLAGS = -Wall -O2
-LFLAGS = -s
 
 ifdef AMIGA
 CC = gcc
@@ -32,7 +31,7 @@ CFLAGS = -O2 -qcpluscmt
 LFLAGS =
 endif
 
-SRCS = WHDInfo.c endian.c
+SRCS = WHDInfo.c
 OBJS = $(SRCS:.c=.o)
 
 ifdef AMIGA
@@ -48,7 +47,7 @@ WHDInfo : $(OBJS)
 endif
 
 clean :
-	$(RM) *.bak *.o *.lnk WHDInfo
+	$(RM) *.bak *.o *.lnk *.tmp WHDInfo
 
 distclean : clean
 	$(RM) C:WHDInfo
@@ -58,7 +57,5 @@ depend:
 
 #DEPENDENCIES
 
-WHDInfo.o: WHDInfo.c whdload.h exectypes.h endian.h
-
-endian.o: endian.c endian.h exectypes.h
+WHDInfo.o: WHDInfo.c whdload.h exectypes.h
 

@@ -48,9 +48,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "endian.h"
-#include "whdload.h"
-
 #define	PROGNAME	"WHDInfo"
 #define	VERSION		"1"
 #define	REVISION	"34"
@@ -69,11 +66,27 @@
 #define	ASCII_WHITE	""
 #endif
 
+#include "whdload.h"
+
 #ifdef AMIGA
 static const char *versionstring = "$VER: " PROGNAME " " VERSION "." REVISION " (" DATE ")";
 #endif
 
 char *progName = NULL;
+
+UWORD GetUWORD(const UWORD *p) {
+	UBYTE *b = (UBYTE*) p;
+	return ((UWORD)b[0] << 8) | b[1];
+}
+
+ULONG GetULONG(const ULONG *p) {
+	UBYTE *b = (UBYTE*) p;
+	return ((ULONG)b[0] << 24) | ((ULONG)b[1] << 16) | ((ULONG)b[2] << 8) | b[3];
+}
+
+LONG GetLONG(const LONG *p) {
+	return (LONG)GetULONG((ULONG*)p);
+}
 
 char *ws_Flags_Descriptions[] = {
 	"Diskimages used by slave (obsolete)",
@@ -219,10 +232,10 @@ long getFileSize(FILE *filePtr)
 	This function does not terminate at a NULL byte.  It always
 	searches n bytes.
 =================================================================== */
-UBYTE *memfind(UBYTE *a, char *b, long n, long len)
+const UBYTE *memfind(const UBYTE *a, const char *b, long n, long len)
 {
 	long	 remaining, precalc = (len - n) + 1;
-	UBYTE	*ptr = a;
+	const UBYTE	*ptr = a;
 
 	for(;;)
 	{
@@ -287,50 +300,44 @@ void showWHDInfo(char *fileName)
 	FILE			*filePtr;
 	long			 filePos = 32, fileSize, counter;
 	UBYTE			*memPtr = NULL, *vers;
-	UWORD			w, *wp;
-	char			*kickstart12 = "33180";
-	char			*kickstart13 = "34005";
-	char			*kickstart31 = "40068";
-	const char		*noslave = "File is NOT a WHDLoad Slave!\n\n";
-
-	InitEndian();
+	const char		*kickstart12 = "33180";
+	const char		*kickstart13 = "34005";
+	const char		*kickstart31 = "40068";
+	const char		*noslave = "File is NOT a WHDLoad Slave!\n";
 
 	filePtr = fopen(fileName,"rb");
-	if (filePtr == NULL)
-	{
-		printf("Couldn't open file %s\n\n",fileName);
+	if (filePtr == NULL) {
+		printf("Couldn't open file %s\n",fileName);
 	} else {
 		fileSize = getFileSize(filePtr);
 		if (fileSize < filePos + sizeof(struct WHDLoadSlave)) {
 			puts(noslave);
 		} else {
 			memPtr = calloc(1,fileSize+1);
-			if (memPtr == NULL)
-			{
-				printf("Couldn't allocate enough memory!\n\n");
+			if (memPtr == NULL) {
+				printf("Couldn't allocate enough memory!\n");
 			} else {
-				if (fread(memPtr, fileSize, 1, filePtr) != 1)
-				{
-					printf("Couldn't read file %s\n\n",fileName);
+				if (fread(memPtr, fileSize, 1, filePtr) != 1) {
+					printf("Couldn't read file %s\n",fileName);
 				} else {
 					slave = (struct WHDLoadSlave *) (memPtr + filePos);
 
 					/* check if it is a WHDLoad Slave file */
-					if (strncmp(slave->ws_ID,"WHDLOADS",8)) {
+					if (strncmp(slave->ws_ID,WHDLoadSlaveID,8)) {
 						puts(noslave);
 					} else {
-						int ws_Version = GetUWORD(&slave->ws_Version, ENDIAN_BIG);
-						int ws_Flags = GetUWORD(&slave->ws_Flags, ENDIAN_BIG);
-						ULONG ws_BaseMemSize = GetULONG(&slave->ws_BaseMemSize, ENDIAN_BIG);
-						ULONG ws_ExecInstall = GetULONG(&slave->ws_ExecInstall, ENDIAN_BIG);
-						UWORD ws_GameLoader = GetUWORD(&slave->ws_GameLoader, ENDIAN_BIG);
-						UWORD ws_CurrentDir = GetUWORD(&slave->ws_CurrentDir, ENDIAN_BIG);
-						UWORD ws_DontCache = GetUWORD(&slave->ws_DontCache, ENDIAN_BIG);
+						int ws_Version = GetUWORD(&slave->ws_Version);
+						int ws_Flags = GetUWORD(&slave->ws_Flags);
+						ULONG ws_BaseMemSize = GetULONG(&slave->ws_BaseMemSize);
+						ULONG ws_ExecInstall = GetULONG(&slave->ws_ExecInstall);
+						UWORD ws_GameLoader = GetUWORD(&slave->ws_GameLoader);
+						UWORD ws_CurrentDir = GetUWORD(&slave->ws_CurrentDir);
+						UWORD ws_DontCache = GetUWORD(&slave->ws_DontCache);
 
 						if (ws_Version >= 10) {
-							UWORD ws_name = GetUWORD(&slave->ws_name, ENDIAN_BIG);
-							UWORD ws_copy = GetUWORD(&slave->ws_copy, ENDIAN_BIG);
-							UWORD ws_info = GetUWORD(&slave->ws_info, ENDIAN_BIG);
+							UWORD ws_name = GetUWORD(&slave->ws_name);
+							UWORD ws_copy = GetUWORD(&slave->ws_copy);
+							UWORD ws_info = GetUWORD(&slave->ws_info);
 
 							if (ws_name != 0) {
 								printf("%s ",memPtr+filePos+ws_name);
@@ -380,13 +387,13 @@ void showWHDInfo(char *fileName)
 								}
 							}
 						}
-						printf("        Base memory: $%lx (%ld KB)\n",ws_BaseMemSize,ws_BaseMemSize>>10);
+						printf("        Base memory: $%x (%d KB)\n",ws_BaseMemSize,ws_BaseMemSize>>10);
 
 						printf("Fake Exec installed: ");
 						if (ws_ExecInstall == 0) {
 							printf("None\n");
 						} else {
-							printf("$%lx\n",ws_ExecInstall);
+							printf("$%x\n",ws_ExecInstall);
 						}
 
 						printf("        Game Loader: $%x ($%lx bytes from start of file)\n",ws_GameLoader,filePos+ws_GameLoader);
@@ -412,28 +419,29 @@ void showWHDInfo(char *fileName)
 						}
 						
 						if (ws_Version >= 8) {
-							LONG ws_ExpMem = GetLONG(&slave->ws_ExpMem, ENDIAN_BIG);
+							LONG ws_ExpMem = GetLONG(&slave->ws_ExpMem);
 							printf("   Expansion memory: ");
 							if (ws_ExpMem == 0) {
 								printf("None\n");
 							} else {
 								if (ws_ExpMem < 0) {
-									printf("$%lx (%ld KB) optional\n",-ws_ExpMem,-ws_ExpMem>>10);
+									printf("$%x (%d KB) optional\n",-ws_ExpMem,-ws_ExpMem>>10);
 								} else {
-									printf("$%lx (%ld KB)\n",ws_ExpMem,ws_ExpMem>>10);
+									printf("$%x (%d KB)\n",ws_ExpMem,ws_ExpMem>>10);
 								}
 							}
 						}
 
 						if (ws_Version >= 16) {
-							UWORD ws_kickname = GetUWORD(&slave->ws_kickname, ENDIAN_BIG);
-							ULONG ws_kicksize = GetULONG(&slave->ws_kicksize, ENDIAN_BIG);
-							UWORD ws_kickcrc = GetUWORD(&slave->ws_kickcrc, ENDIAN_BIG);
+							UWORD *wp, w;
+							UWORD ws_kickname = GetUWORD(&slave->ws_kickname);
+							ULONG ws_kicksize = GetULONG(&slave->ws_kicksize);
+							UWORD ws_kickcrc = GetUWORD(&slave->ws_kickcrc);
 							printf("     Kickstart name: ");
 							if (ws_kickcrc == 0xffff) {
 								wp = (UWORD*) (memPtr+filePos+ws_kickname);
 								while (*wp++) {
-									w = GetUWORD(wp++, ENDIAN_BIG);
+									w = GetUWORD(wp++);
 									printf("'%s' ",memPtr+filePos+w);
 								}
 							} else {
@@ -443,13 +451,13 @@ void showWHDInfo(char *fileName)
 									printf("None");
 								}
 							}
-							printf("\n     Kickstart size: $%lx",ws_kicksize);
-							if (ws_kicksize) { printf(" (%ld KB)",ws_kicksize>>10); }
+							printf("\n     Kickstart size: $%x",ws_kicksize);
+							if (ws_kicksize) { printf(" (%d KB)",ws_kicksize>>10); }
 							printf("\n      Kickstart crc: ");
 							if (ws_kickcrc == 0xffff) {
 								wp = (UWORD*) (memPtr+filePos+ws_kickname);
 								while (*wp) {
-									w = GetUWORD(wp++, ENDIAN_BIG);
+									w = GetUWORD(wp++);
 									printf("$%x ",w);
 									wp++;
 								}
@@ -460,7 +468,7 @@ void showWHDInfo(char *fileName)
 						}
 
 						if (ws_Version >= 17) {
-							UWORD ws_config = GetUWORD(&slave->ws_config, ENDIAN_BIG);
+							UWORD ws_config = GetUWORD(&slave->ws_config);
 							char saved, *str, *next, *prefix;
 							prefix = "      Configuration: ";
 							if (ws_config == 0) {
@@ -481,7 +489,7 @@ void showWHDInfo(char *fileName)
 
 						if (ws_Version >= 20) {
 							char *prefix = "Alternate Memory:";
-							int ws_MemConfig = GetUWORD(&slave->ws_MemConfig, ENDIAN_BIG);
+							int ws_MemConfig = GetUWORD(&slave->ws_MemConfig);
 							if (ws_MemConfig == 0) {
 								printf("%20s None\n",prefix);
 							} else {
@@ -489,15 +497,15 @@ void showWHDInfo(char *fileName)
 								int count = 1;
 								LONG c, f, *p;
 								p = (LONG*) (memPtr+filePos+ws_MemConfig);
-								while ((c = GetLONG(p++, ENDIAN_BIG))) {
-									f = GetLONG(p++, ENDIAN_BIG);
+								while ((c = GetLONG(p++))) {
+									f = GetLONG(p++);
 									if (f < 0) {
 										optional = " optional";
 										f = -f;
 									} else {
 										optional = "";
 									}
-									printf("%20s %d. Base = $%lx (%ld KB), Exp = $%lx (%ld KB)%s\n",
+									printf("%20s %d. Base = $%x (%d KB), Exp = $%x (%d KB)%s\n",
 										prefix, count++, c, c>>10, f, f>>10, optional);
 									prefix = "";
 								}

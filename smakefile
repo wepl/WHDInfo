@@ -3,13 +3,12 @@
 # Tue Apr 18 21:41:58 2000
 #
 
-OBJS= WHDInfo.o endian.o
+OBJS= WHDInfo.o
 
 WHDInfo: $(OBJS)
    sc link to WHDInfo with <<
 $(OBJS)
 <
 
-WHDInfo.o: WHDInfo.c whdload.h endian.h
+WHDInfo.o: WHDInfo.c whdload.h
 
-endian.o: endian.c endian.h
