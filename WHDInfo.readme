@@ -4,17 +4,16 @@ Author:    codetapper@hotmail.com (Codetapper), Wepl
 Version:   1.34
 Type:      util/misc
 
-  WHDInfo is used to display information about WHDInfo slaves used in
+  WHDInfo is used to display information about WHDLoad Slaves used in
   hundreds of HD installers.  With this utility, you can quickly view ALL
-  the slave information including WHDLoad version required, memory, slave
+  the Slave information including WHDLoad version required, memory, Slave
   version, copyright information...  This is very handy to check you have
-  the latest slave, finding the quit key for games, and for WHDLoad HD
+  the latest Slave, finding the quit key for games, and for WHDLoad HD
   installer writers to check their installs.
 
-  WHDInfo should be run from the CLI only (you can run from Workbench,
-  but it will only display the help screen and quit).
+  WHDInfo should be run from the CLI only.
 
-  It is best setup in Directory Opus so that double clicking on a slave 
+  It is best setup in Directory Opus so that double clicking on a Slave 
   displays all information about it.
 
   Special greetings to Wepl for writing WHDLoad and assistance!
