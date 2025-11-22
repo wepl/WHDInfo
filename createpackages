@@ -5,17 +5,16 @@ Copy WHDInfo C:WHDInfo
 Version C:WHDInfo >T:wiversion
 Set VER `perl -ne "/^[\w\.]+ (\d+)\.(\d+)/ and print $1 . $2" T:wiversion`
 Delete T:wiversion
-Set ARC .packages/WHDInfo$VER.lha
+Set ARC WHDInfo$VER.lha
 
-Delete #?.bak #?/#?.bak $ARC
+Set REL T:WHDInfo
+Delete #?.bak $ARC $REL All
 
 C:DoVer FMT="%5v (%2d %M %2y) %n" DEFAULT="    -" FORCE QUIET C:WHDInfo
-Copy Clone C:WHDInfo WHDInfo.readme		.release
-Copy Clone #?.[ch] SCOPTIONS smakefile Makefile	.release/src
 
-make clean
+MakeDir $REL $REL/src
+Copy Clone C:WHDInfo WHDInfo.readme		$REL
+Copy Clone #?.[ch] SCOPTIONS smakefile Makefile	$REL/src
 
-Rename .release WHDInfo
-lha -aeryZ a $ARC WHDInfo
-Rename WHDInfo .release
+lha -aeryZ a $ARC $REL
 

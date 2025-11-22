@@ -1,7 +1,7 @@
 Short:     WHDLoad slave examiner for HD games
 Uploader:  codetapper@hotmail.com (Codetapper)
 Author:    codetapper@hotmail.com (Codetapper), Wepl
-Version:   1.33
+Version:   1.34
 Type:      util/misc
 
   WHDInfo is used to display information about WHDInfo slaves used in
@@ -59,12 +59,16 @@ Type:      util/misc
   1.33 (21.11.21) Wepl
  	- fix detection of WHDLoad Slaves
 
+  1.34 (22.11.25) Wepl
+	- use standard whdload.h
+	- replace endian.c and fix 64-bit arch build
+	- add support for v20 Slaves
+
   Example Output
   --------------
   1.> WHDInfo BattleIsle.slave
 
-  WHDInfo v1.31
-  (c) 2002 Codetapper of Action (codetapper@hotmail.com)
+  WHDInfo v1.34 (19.11.2025) by Codetapper, Wepl
 
   Battle Isle (c) 1991 Blue Byte
   adapted by Wepl
@@ -89,8 +93,7 @@ Type:      util/misc
 
   1.> WHDInfo Entity.slave
 
-  WHDInfo v1.31
-  (c) 2002 Codetapper of Action (codetapper@hotmail.com)
+  WHDInfo v1.34 (19.11.2025) by Codetapper, Wepl
 
   Entity (c) 1992 Loriciel
   installed & fixed by Bored Seal
@@ -110,3 +113,4 @@ Type:      util/misc
             Debug key: None
              Exit key: F10
      Expansion memory: None
+

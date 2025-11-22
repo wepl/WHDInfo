@@ -39,8 +39,11 @@
  *	- fix detection of WHDLoad Slaves, as only one hunk is
  *	  supported the struct will always start at fixed position 32
  *
- * 1.34 (19.11.2025) Wepl
+ * 1.34 (22.11.2025) Wepl
  *	- use standard whdload.h
+ *	- replace endian.c and fix 64-bit arch build
+ *	- add support for v20 Slaves
+ *	- overall cleanup
  */
 
 #include <stdio.h>
@@ -52,7 +55,7 @@
 #define	VERSION		"1"
 #define	REVISION	"34"
 #define	AUTHOR		"Codetapper, Wepl"
-#define	DATE		"19.11.2025"
+#define	DATE		"22.11.2025"
 
 #ifdef AMIGA
 #include <exec/types.h>
@@ -95,7 +98,7 @@ char *ws_Flags_Descriptions[] = {
 	"Ignore division by zero exceptions",
 	"Abort if MC68020+ is unavailable",
 	"Abort if AGA chipset is unavailable",
-	"Don't get the keycode in conjunction with NoVBRMove",
+	"Don't get the keycode / acknowledge keyboard interrupts",
 	"Forward \"line-a\" exceptions to handler",
 	"Forward \"trapv\" exceptions to handler",
 	"Forward \"chk, chk2\" exceptions to handler",
@@ -204,7 +207,7 @@ long getFileSize(FILE *filePtr)
 
 	if (fseek(filePtr,0,SEEK_END) == -1)
 	{
-		printf("Couldn't determine filesize!\n\n");
+		printf("Couldn't determine filesize!\n");
 		return(-1);
 	}
 
@@ -212,7 +215,7 @@ long getFileSize(FILE *filePtr)
 
 	if (fseek(filePtr,0,SEEK_SET) == -1)
 	{
-		printf("Couldn't seek to beginning of file!\n\n");
+		printf("Couldn't seek to beginning of file!\n");
 		return(-1);
 	}
 	return(fileSize);
@@ -303,7 +306,7 @@ void showWHDInfo(char *fileName)
 	const char		*kickstart12 = "33180";
 	const char		*kickstart13 = "34005";
 	const char		*kickstart31 = "40068";
-	const char		*noslave = "File is NOT a WHDLoad Slave!\n";
+	const char		*noslave = "File is NOT a WHDLoad Slave!";
 
 	filePtr = fopen(fileName,"rb");
 	if (filePtr == NULL) {
@@ -340,17 +343,19 @@ void showWHDInfo(char *fileName)
 							UWORD ws_info = GetUWORD(&slave->ws_info);
 
 							if (ws_name != 0) {
-								printf("%s ",memPtr+filePos+ws_name);
+								printf("%s",memPtr+filePos+ws_name);
 							}
 							if (ws_copy != 0) {
-								printf("(c) %s",memPtr+filePos+ws_copy);
+								printf(" (c) %s",memPtr+filePos+ws_copy);
 							}
 							if ((ws_name != 0) || (ws_copy != 0)) {
-								puts("\n");
+								puts("");
 							}
 							if (ws_info != 0) {
 								replaceNegOneInString((char*)memPtr+filePos+ws_info);
 								printf("%s\n\n",memPtr+filePos+ws_info);
+							} else {
+								puts("");
 							}
 						}
 

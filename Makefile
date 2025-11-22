@@ -1,8 +1,6 @@
 #
 # Makefile for WHDInfo
 # on Amiga use gmake/gcc and call 'make AMIGA=1'
-# on MacOSX use XCode and call 'make MACOSX=1'
-# on AIX use xlc and call 'gmake AIX=1' (requires GNU make, see Toolbox)
 #
 # $@ target
 # $< first dependency
@@ -16,19 +14,6 @@ ifdef AMIGA
 CC = gcc
 CFLAGS = -Wall -noixemul -O2
 LFLAGS = -noixemul -s
-endif
-
-ifdef MACOSX
-#ARCH=-arch i386 -arch ppc
-#ARCH=-arch i386 -arch x86_64	# source is not yet 64-bit ready!
-ARCH=-arch i386
-CFLAGS = -Wall -O2 $(ARCH)
-LFLAGS = $(ARCH)
-endif
-
-ifdef AIX
-CFLAGS = -O2 -qcpluscmt
-LFLAGS =
 endif
 
 SRCS = WHDInfo.c
